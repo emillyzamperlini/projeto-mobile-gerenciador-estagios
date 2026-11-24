@@ -10,14 +10,45 @@ export default function FormularioEstagio({ navigation }) {
     const [dataFim, setDataFim] = useState('');
     const [status, setStatus] = useState('');
 
-    function salvarEstagio() {
-        if (!empresa || !cargo || !dataInicio || !status) {
-            Alert.alert('Atenção', 'Preencha todos os campos obrigatórios.');
-            return;
+
+async function salvarEstagio() {
+    if (!empresa || !cargo || !dataInicio || !status) {
+        Alert.alert('Atenção', 'Preencha todos os campos obrigatórios.');
+        return;
+    }
+
+    const estagio = {
+        empresa: empresa,
+        cargo: cargo,
+        descricao: descricao,
+        dataInicio: dataInicio,
+        dataFim: dataFim.trim() === '' ? null : dataFim,
+        status: status
+    };
+
+    try {
+        const resposta = await fetch('http://192.168.2.106:8080/api/estagios', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(estagio)
+        });
+
+        if (!resposta.ok) {
+            const mensagem = await resposta.text();
+            console.log('Erro do Backend:', resposta.status, mensagem);
+            throw new Error(`Erro ${resposta.status}: ${mensagem}`);
         }
 
-        Alert.alert('Formulário preenchido', 'A integração com o Backend será feita na próxima etapa.');
+        Alert.alert('Sucesso!', 'Estágio cadastrado com sucesso!');
+
+    } catch (erro) {
+        console.log('Erro ao cadastrar:', erro);
+        Alert.alert('Erro', erro.message);
     }
+}
+
 
     return (
         <ScrollView style={styles.container}>
