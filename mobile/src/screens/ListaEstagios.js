@@ -1,31 +1,39 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, FlatList, TextInput, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ListaEstagios({ navigation }) {
     const [estagios, setEstagios] = useState([]);
     const [busca, setBusca] = useState('');
     const [ordem, setOrdem] = useState('asc');
 
-    useEffect(() => {
-        carregarEstagios();
-    }, []);
+    const API = 'http://192.168.15.5:8080/api/estagios';
+
+    useFocusEffect(
+        useCallback(() => {
+            carregarEstagios();
+        }, [])
+    );
 
     async function carregarEstagios() {
         try {
-            const resposta = await fetch('http://172.16.33.3:8080/api/estagios');
+            const resposta = await fetch(API);
+
+            if (!resposta.ok) {
+                throw new Error('Não foi possível carregar os estágios.');
+            }
+
             const dados = await resposta.json();
             setEstagios(dados);
         } catch (erro) {
             console.log('Erro ao carregar estágios:', erro);
+            Alert.alert('Erro', 'Não foi possível carregar os estágios.');
         }
     }
 
     function formatarData(data) {
-        if (!data) {
-            return '';
-        }
-
+        if (!data) return '';
         return data.split('-').reverse().join('/');
     }
 
@@ -37,8 +45,9 @@ export default function ListaEstagios({ navigation }) {
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Excluir',
+                    style: 'destructive',
                     onPress: () => {
-                        setEstagios(estagios.filter(item => item.id !== id));
+                        setEstagios(lista => lista.filter(item => item.id !== id));
                         Alert.alert('Sucesso', 'Estágio removido da lista.');
                     }
                 }
@@ -47,21 +56,23 @@ export default function ListaEstagios({ navigation }) {
     }
 
     const estagiosFiltrados = estagios.filter(item =>
-        item.empresa.toLowerCase().includes(busca.toLowerCase())
+        (item.empresa || '').toLowerCase().includes(busca.toLowerCase())
     );
 
     const estagiosOrdenados = [...estagiosFiltrados].sort((a, b) => {
-        const dataA = new Date(a.dataInicio);
-        const dataB = new Date(b.dataInicio);
+        const dataA = new Date(a.dataInicio + 'T00:00:00');
+        const dataB = new Date(b.dataInicio + 'T00:00:00');
 
         return ordem === 'asc' ? dataA - dataB : dataB - dataA;
     });
 
     return (
         <View style={styles.container}>
+            <Text style={styles.titulo}>Meus Estágios</Text>
+
             <TextInput
                 style={styles.input}
-                placeholder="Buscar por empresa"
+                placeholder="Pesquisar por empresa..."
                 value={busca}
                 onChangeText={setBusca}
             />
@@ -123,6 +134,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F5F3FA',
         padding: 15
+    },
+    titulo: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#50358A',
+        marginBottom: 15
     },
     input: {
         backgroundColor: '#FFFFFF',

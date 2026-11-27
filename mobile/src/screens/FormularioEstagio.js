@@ -4,6 +4,7 @@ import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert } from 
 
 export default function FormularioEstagio({ navigation, route }) {
     const estagio = route.params?.estagio;
+    const API = 'http://192.168.15.5:8080/api/estagios';
 
     const [empresa, setEmpresa] = useState('');
     const [cargo, setCargo] = useState('');
@@ -66,9 +67,7 @@ export default function FormularioEstagio({ navigation, route }) {
 
         try {
             const resposta = await fetch(
-                estagio
-                    ? `http://172.16.33.3:8080/api/estagios/${estagio.id}`
-                    : 'http://172.16.33.3:8080/api/estagios',
+                estagio ? `${API}/${estagio.id}` : API,
                 {
                     method: estagio ? 'PUT' : 'POST',
                     headers: {
@@ -95,7 +94,7 @@ export default function FormularioEstagio({ navigation, route }) {
             );
         } catch (erro) {
             Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
-            console.log(erro);
+            console.log('Erro ao salvar estágio:', erro);
         }
     }
 
